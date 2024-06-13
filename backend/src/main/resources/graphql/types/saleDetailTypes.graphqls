@@ -1,0 +1,17 @@
+type SaleDetail {
+    id: ID!
+    invoiceNo: String!
+    invoiceDate: String!
+    description: String!
+    quantity: Float!
+    unitPrice: String!
+    country: String!
+    contactId: String!
+    productId: String!
+}
+
+type SalesDetailsPage {
+    salesDetails: [SaleDetail]
+    totalCount: Int
+    totalPages: Int
+}

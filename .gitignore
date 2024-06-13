@@ -1,0 +1,91 @@
+# Ignore node_modules and build directories
+/frontend/node_modules
+/frontend/dist
+/frontend/.vite
+/frontend/.env.local
+/frontend/.env.production
+/frontend/.env.development
+/frontend/.nuxt
+
+# Logs
+/frontend/logs
+/frontend/npm-debug.log*
+/frontend/yarn-debug.log*
+/frontend/yarn-error.log*
+/frontend/pnpm-debug.log*
+
+# Ignore lockfiles
+/frontend/package-lock.json
+/frontend/yarn.lock
+/frontend/pnpm-lock.yaml
+
+# Dependency directories
+/backend/.mvn
+/backend/target
+/backend/node_modules
+
+# Maven specific
+/backend/logs
+/backend/.mvn
+/backend/.idea
+/backend/*.iml
+
+# Local environment variables
+/backend/.env
+
+# IDE-specific files
+/.idea/
+/.vscode/
+/*.iml
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.override.yml
+**/.env
+**/.env.*
+
+# Coverage reports
+**/coverage
+**/coverage/*
+**/.nyc_output
+**/coverage-final.json
+
+# Lint and build output
+**/eslint-report.json
+**/test-results
+**/test-results/*
+**/test-results.json
+
+# Ignore environment variable files
+**/.env.local
+**/.env.development
+**/.env.test
+**/.env.production
+**/.env.*.local
+
+# Miscellaneous
+**/.cache
+**/.next
+**/.nuxt
+**/.parcel-cache
+**/.sass-cache
+**/.serverless
+**/.temp
+**/.cache-loader
+**/package-lock.json
+**/yarn.lock
+**/.npm
+**/.npm/*
+**/.build/*
+**/.cucumber/
+**/.eslintcache
+**/.idea/*
+**/.pnp
+**/.pnp.js
+**/.pnpm-store
+**/yarn-error.log
+**/.eslintignore
+**/node_modules

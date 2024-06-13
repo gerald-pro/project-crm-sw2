@@ -1,0 +1,29 @@
+type User {
+    id: String!
+    name: String!
+    username: String!
+    email: String!
+    roles: [Role!]
+    createdAt: String
+}
+
+input LoginInput{
+    username: String!,
+    password: String!
+}
+
+type AuthResponse {
+    user: User
+    token: String
+}
+
+input RegisterInput {
+    name: String!
+    username: String!
+    email: String!
+    password: String!
+}
+
+type Role {
+    name: String!
+}

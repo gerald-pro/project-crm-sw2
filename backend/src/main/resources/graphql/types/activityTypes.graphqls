@@ -1,0 +1,14 @@
+type Activity {
+    id: ID!
+    name: String!
+    description: String
+    location: String
+    activityDate: String!
+}
+
+input ActivityInput {
+    name: String!
+    description: String
+    location: String
+    activityDate: String!
+}

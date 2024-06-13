@@ -1,0 +1,21 @@
+type Contact {
+    id: ID!
+    name: String!
+    email: String!
+    phone: String
+    address: String
+    createdAt: String!
+}
+
+input ContactInput {
+    name: String!
+    email: String!
+    phone: String
+    address: String
+}
+
+type ContactsPage {
+    contacts: [Contact]
+    totalCount: Int
+    totalPages: Int
+}

@@ -1,0 +1,25 @@
+type Lead {
+    id: ID!
+    title: String!
+    description: String
+    userId: String!
+    contactId: String!
+    value: Float
+    status: String
+    createdAt: String
+}
+
+input LeadInput {
+    title: String!
+    description: String
+    userId: String!
+    contactId: String!
+    value: Float
+    status: String
+}
+
+type LeadsPage {
+    leads: [Lead]
+    totalCount: Int
+    totalPages: Int
+}

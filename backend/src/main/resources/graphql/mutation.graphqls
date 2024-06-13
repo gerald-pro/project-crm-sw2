@@ -1,0 +1,17 @@
+type Mutation {
+    login(username: String!, password: String!): AuthResponse
+    register(name: String!, username: String!, password: String! email: String!): AuthResponse
+
+    createContact(input: ContactInput!): Contact
+    updateContact(id: String!, input: ContactInput!): Contact
+    deleteContact(id: String!): Boolean
+
+    createLead(input: LeadInput!): Lead
+    updateLead(id: String!, input: LeadInput!): Lead
+    deleteLead(id: String!): String
+
+    createProduct(description: String!): Product
+    updateProduct(id: ID!, description: String!): Product
+    deleteProduct(id: ID!): Boolean
+}
+

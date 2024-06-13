@@ -1,0 +1,15 @@
+type Query {
+    getUser(id: ID!): User
+    getAllUsers: [User],
+
+    getContacts(page: Int!, size: Int!, filter: String): ContactsPage
+    getContactById(id: ID!): Contact
+
+    getAllLeads: [Lead]
+    getLeads(page: Int!, size: Int!): LeadsPage
+
+    getSalesDetails(page: Int!, size: Int!): SalesDetailsPage
+
+    getProducts(page: Int!, size: Int!): ProductsPage
+    getProductById(id: ID!): Product
+}

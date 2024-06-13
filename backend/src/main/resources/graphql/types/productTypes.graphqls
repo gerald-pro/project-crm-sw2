@@ -1,0 +1,14 @@
+type Product {
+    id: ID!
+    description: String!
+}
+
+type ProductInput {
+    description: String!
+}
+
+type ProductsPage {
+    products: [Product]
+    totalCount: Int
+    totalPages: Int
+}
