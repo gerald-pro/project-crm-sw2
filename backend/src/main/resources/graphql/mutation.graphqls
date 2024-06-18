@@ -7,8 +7,12 @@ type Mutation {
     deleteContact(id: String!): Boolean
 
     createLead(input: LeadInput!): Lead
-    updateLead(id: String!, input: LeadInput!): Lead
+    updateLead(id: String!, input: UpdateLeadInput!): Lead
     deleteLead(id: String!): String
+
+    createActivity(input: ActivityInput!): Activity
+    updateActivity(input: UpdateActivityInput!): Activity
+    deleteActivity(id: String!): String
 
     createProduct(description: String!): Product
     updateProduct(id: ID!, description: String!): Product

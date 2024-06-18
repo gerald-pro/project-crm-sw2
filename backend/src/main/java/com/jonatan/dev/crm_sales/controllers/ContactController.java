@@ -29,11 +29,18 @@ public class ContactController {
 
     @QueryMapping
     public ContactsPage getContacts(
-            @Argument int page,
-            @Argument int size,
+            @Argument Optional<Integer> page,
+            @Argument Optional<Integer> size,
             @Argument Optional<String> filter) {
 
-        Pageable pageable = PageRequest.of(page - 1, size);
+        if (page.isPresent()) {
+            if (page.get() <= 1) {
+                page = Optional.of(0);
+            } else {
+                page = Optional.of(page.get() - 1);
+            }
+        }
+        Pageable pageable = PageRequest.of(page.orElse(0), size.orElse(Integer.MAX_VALUE));
         Page<Contact> contactPage = contactService.getContacts(pageable, filter);
 
         List<Contact> contacts = contactPage.getContent();

@@ -1,5 +1,6 @@
 package com.jonatan.dev.crm_sales.domains.input;
 
+import com.jonatan.dev.crm_sales.domains.LeadStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,5 +14,5 @@ public class LeadInput {
     private String userId;
     private String contactId;
     private Float value;
-    private String status = "nuevo";
+    private LeadStatus status = LeadStatus.nuevo;
 }

@@ -1,12 +1,18 @@
 type Query {
     getUser(id: ID!): User
     getAllUsers: [User],
+    getUsers(page: Int, size: Int, filter: String): UsersPage
 
-    getContacts(page: Int!, size: Int!, filter: String): ContactsPage
+    getContacts(page: Int, size: Int, filter: String): ContactsPage
     getContactById(id: ID!): Contact
 
     getAllLeads: [Lead]
     getLeads(page: Int!, size: Int!): LeadsPage
+    getLead(id: String!): Lead
+
+    getAllActivities: [Activity]
+    getActivity(id: String!): Activity
+    getActivitiesByLead(id: String!): [Activity]
 
     getSalesDetails(page: Int!, size: Int!): SalesDetailsPage
 

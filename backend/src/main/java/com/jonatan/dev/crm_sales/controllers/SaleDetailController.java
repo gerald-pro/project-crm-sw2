@@ -1,7 +1,7 @@
 package com.jonatan.dev.crm_sales.controllers;
 
 import com.jonatan.dev.crm_sales.domains.SaleDetail;
-import com.jonatan.dev.crm_sales.domains.input.SaleDetailsPage;
+import com.jonatan.dev.crm_sales.domains.page.SaleDetailsPage;
 import com.jonatan.dev.crm_sales.services.SaleDetailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;

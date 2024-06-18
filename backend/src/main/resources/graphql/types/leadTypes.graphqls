@@ -5,7 +5,7 @@ type Lead {
     userId: String!
     contactId: String!
     value: Float
-    status: String
+    status: LeadStatus
     createdAt: String
 }
 
@@ -15,11 +15,29 @@ input LeadInput {
     userId: String!
     contactId: String!
     value: Float
-    status: String
+    status: LeadStatus
+}
+
+input UpdateLeadInput {
+    title: String
+    description: String
+    userId: String
+    contactId: String
+    value: Float
+    status: LeadStatus
 }
 
 type LeadsPage {
     leads: [Lead]
     totalCount: Int
     totalPages: Int
+}
+
+enum LeadStatus {
+    nuevo
+    calificado
+    en_curso
+    oportunidad
+    completado
+    cancelado
 }

@@ -17,18 +17,33 @@ export const ALL_USERS = gql`
     }
 `;
 
+export const GET_USERS = gql`
+    query ($page: Int, $size: Int, $filter: String) { 
+        getUsers (page: $page, size: $size, filter: $filter) {
+            totalCount
+            totalPages
+            users {
+                id
+                name
+                username
+                email
+                createdAt
+            }
+        }
+    }
+`;
+
 
 /**
  * Obtiene un usuario por su ID.
  */
-export const USER_BY_ID = gql`
-    query ($id: ID!) { 
+export const GET_USER = gql`
+    query ($id: String!) { 
         getUser(id: $id) {
         id
         name
         username
         password
-        roles
         }
     }
 `;

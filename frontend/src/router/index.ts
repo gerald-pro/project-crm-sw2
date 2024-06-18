@@ -3,6 +3,7 @@ import Login from '@/views/Login.vue'
 import SignUp from '@/views/SignUp.vue'
 import Dashboard from '@/views/Dashboard.vue'
 import Leads from '@/views/Leads.vue'
+import ShowLead from '@/views/ShowLead.vue'
 import Contacts from '@/views/Contacts.vue'
 import Users from '@/views/Users.vue'
 import Products from '@/views/Products.vue'
@@ -39,6 +40,12 @@ const router = createRouter({
       path: '/leads',
       name: 'Leads',
       component: Leads,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/leads/:id',
+      name: 'ShowLead',
+      component: ShowLead,
       meta: { requiresAuth: true },
     },
     {

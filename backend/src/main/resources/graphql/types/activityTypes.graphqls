@@ -1,14 +1,33 @@
 type Activity {
-    id: ID!
-    name: String!
+    id: String!
+    title: String!
     description: String
+    type: ActivityType!
     location: String
     activityDate: String!
+    leadId: String!
 }
 
 input ActivityInput {
-    name: String!
+    title: String!
     description: String
+    type: ActivityType!
     location: String
     activityDate: String!
+    leadId: String!
+}
+
+input UpdateActivityInput {
+    id: String!
+    title: String
+    description: String
+    type: ActivityType
+    location: String
+    activityDate: String
+}
+
+enum ActivityType {
+    CALL
+    MEETING
+    LUNCH
 }

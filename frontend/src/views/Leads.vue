@@ -1,14 +1,16 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import BaseModal from '@/components/BaseModal.vue';
+import { computed, reactive, ref } from 'vue';
 import LeadCard from '@/components/LeadCard.vue';
 import { CREATE_LEAD, UPDATE_LEAD, DELETE_LEAD } from '@/graphql/mutations/leadMutations';
 import { GET_LEADS } from '@/graphql/queries/leadQueries';
 import { useMutation, useQuery } from '@vue/apollo-composable';
-import type { Contact, Lead } from '@/graphql/interfaces';
-import { toast } from 'vue3-toastify';
-import { ALL_USERS } from '@/graphql/queries/userQueries';
+import { LeadStatus, type Contact, type Lead, type LeadInput, type UpdateLeadInput } from '@/graphql/interfaces';
 import { GET_CONTACTS } from '@/graphql/queries/contactQueries';
+import ConfirmDialog from 'primevue/confirmdialog';
+import { useConfirm } from 'primevue/useconfirm';
+import { useToast } from 'primevue/usetoast';
+import type { User } from '@/types/types';
+import { GET_USER, GET_USERS } from '@/graphql/queries/userQueries';
 
 const leadStatuses = [
   'nuevo',
@@ -25,7 +27,7 @@ const pageSize = 20;
 const isCreateModalOpen = ref(false);
 const isEditModalOpen = ref(false);
 
-const createLeadInput = ref({
+const createLeadInput = ref<LeadInput>({
   title: "",
   description: "",
   userId: "",
@@ -34,33 +36,34 @@ const createLeadInput = ref({
   status: "nuevo",
 });
 
-const editLeadInput = ref({
-  id: "",
-  title: "",
-  description: "",
-  userId: "",
-  contactId: "",
-  value: 0,
-  status: "",
+const editLeadInput = ref<UpdateLeadInput>({
+  id: ""
 });
 
+
+const confirm = useConfirm();
+const toast = useToast();
 
 // Funciones para abrir y cerrar modales
 const openCreateModal = () => {
   isCreateModalOpen.value = true;
+
   createLeadInput.value = {
     title: "",
     description: "",
     userId: "",
     contactId: "",
     value: 0,
-    status: "nuevo",
+    status: LeadStatus.nuevo,
   }
+
+  selectedContact.value = null;
+  searchedContact.value = "";
+
 };
 const closeCreateModal = () => { isCreateModalOpen.value = false };
 
 const openEditModal = (lead: Lead) => {
-  console.log(lead);
   isEditModalOpen.value = true
   editLeadInput.value = {
     id: lead.id,
@@ -71,6 +74,8 @@ const openEditModal = (lead: Lead) => {
     value: lead.value,
     status: lead.status,
   };
+
+
 }
 
 const closeEditModal = () => {
@@ -96,24 +101,46 @@ const { mutate: deleteLead } = useMutation(DELETE_LEAD);
 
 const handleCreateLead = async () => {
   try {
-    const { title, description, userId, contactId, value, status } = createLeadInput.value;
+    if (selectedContact.value?.id != null) {
+      createLeadInput.value.contactId = selectedContact.value.id;
 
-    await createLead({
-      title, description, userId, contactId, value, status
-    });
+      if (selectedUser.value?.id != null) {
 
-    toast.success("Lead creado exitosamente !");
-    refetch();
+        createLeadInput.value.userId = selectedUser.value.id;
+
+        const { title, description, userId, contactId, value, status } = createLeadInput.value;
+
+        await createLead({
+          title, description, userId, contactId, value, status
+        });
+
+        toast.add({ severity: 'success', summary: 'Registrado', detail: 'Lead creado correctamente', life: 3000 });
+        refetch();
+        closeCreateModal();
+
+        selectedContact.value = null;
+        searchedContact.value = "";
+
+      } else {
+        toast.add({ severity: 'error', summary: 'Error', detail: "Debe seleccionar un vendedor valido", life: 5000 });
+      }
+
+    } else {
+      toast.add({ severity: 'error', summary: 'Error', detail: "Debe seleccionar un contacto valido", life: 5000 });
+
+    }
+
+    /* 
+        */
 
   } catch (error: any) {
     errorMessage.value = error.message || 'Ocurrió un error durante la creacion del lead.';
-
     if (errorMessage.value) {
-      toast.error(errorMessage.value);
+      toast.add({ severity: 'error', summary: 'Error', detail: errorMessage.value, life: 5000 });
     }
+
   } finally {
     isLoading.value = false;
-    closeCreateModal();
   }
 };
 
@@ -125,32 +152,53 @@ const handleUpdateLead = async () => {
       id, title, description, userId, contactId, value, status
     });
 
-    toast.success("Lead actualizado exitosamente !");
+    toast.add({ severity: 'success', summary: 'Registrado', detail: 'Lead actualizado exitosamente!', life: 3000 });
     refetch();
-
+    closeEditModal();
   } catch (error: any) {
     errorMessage.value = error.message || 'Ocurrió un error durante la actualización del lead.';
-
     if (errorMessage.value) {
-      toast.error(errorMessage.value);
+      toast.add({ severity: 'error', summary: 'Error', detail: errorMessage.value, life: 5000 });
     }
 
   } finally {
     isLoading.value = false;
-    closeEditModal();
   }
 
 };
 
-const handleDeleteLead = async (id: string) => {
-  try {
-    await deleteLead({ id });
-    refetch();
-    toast.success("Lead eliminado exitosamente!");
-  } catch (error: any) {
-    toast.error(error.message || 'Ocurrió un error durante la eliminación del lead.');
-  }
+
+const handleDeleteLead = (id: number) => {
+  confirm.require({
+    message: '¿Estas seguro? Esta acción es irreversible',
+    header: 'Eliminar',
+    rejectProps: {
+      label: 'Cancelar',
+      severity: 'secondary',
+      outlined: true
+    },
+    acceptProps: {
+      label: 'Eliminar',
+      severity: 'danger',
+    },
+    accept: async () => {
+      try {
+        await deleteLead({ id: id });
+        refetch()
+        toast.add({ severity: 'success', summary: 'Eliminado', detail: 'Recurso eliminado correctamente', life: 3000 });
+      } catch (error) {
+        toast.add({ severity: 'error', summary: 'Error', detail: error, life: 5000 });
+      }
+    },
+  });
 };
+
+
+const searchedContact = ref<string>();
+const selectedContact = ref<Contact | null>(null);
+
+const searchedUser = ref<string>();
+const selectedUser = ref<User>();
 
 // Consulta para obtener los leads
 const { result: leadsResult, error: leadsError, refetch } = useQuery(GET_LEADS, () => ({
@@ -160,20 +208,54 @@ const { result: leadsResult, error: leadsError, refetch } = useQuery(GET_LEADS, 
   fetchPolicy: 'network-only'
 });
 
-const { result: usersResult, error: usersError, loading: usersLoading } = useQuery(ALL_USERS);
-const { result: contactsResult } = useQuery(GET_CONTACTS, () => ({
+
+const { result: usersResult, refetch: refetchUsers } = useQuery(GET_USERS, () => ({
   page: 1,
-  size: 20,
+  size: 2500,
+  filter: searchedUser.value,
 }));
+
+const { result: contactsResult, refetch: refetchContacts } = useQuery(GET_CONTACTS, () => ({
+  page: 1,
+  size: 2500,
+  filter: searchedContact.value,
+}));
+
 
 const leads = computed<Lead[]>(() => leadsResult.value?.getLeads.leads || []);
 const totalCount = computed(() => leadsResult.value?.getLeads.totalCount || 0);
 const totalPages = computed(() => leadsResult.value?.getLeads.totalPages || 1);
-const users = computed(() => usersResult.value?.getAllUsers || []);
-const contacts = computed<Contact[]>(() => contactsResult.value?.getContacts.contacts || []);
+const users = computed(() => usersResult.value?.getUsers.users || []);
+let contacts = computed<Contact[]>(() => contactsResult.value?.getContacts.contacts || []);
 
 interface GroupedLeads {
   [key: string]: Lead[];
+}
+
+const searchContact = (event: any) => {
+  setTimeout(async () => {
+
+    if (!event.query.trim().length) {
+      searchedContact.value = "";
+      await refetchContacts()
+    } else {
+      searchedContact.value = event.query.toLowerCase();
+      await refetchContacts()
+    }
+  }, 1000);
+}
+
+const searchUser = (event: any) => {
+  setTimeout(async () => {
+
+    if (!event.query.trim().length) {
+      searchedUser.value = "";
+      await refetchUsers()
+    } else {
+      searchedUser.value = event.query.toLowerCase();
+      await refetchUsers()
+    }
+  }, 1000);
 }
 
 const leadsByStatus = computed<GroupedLeads>(() => {
@@ -188,6 +270,8 @@ const leadsByStatus = computed<GroupedLeads>(() => {
 
 
 <template>
+  <Toast />
+  <ConfirmDialog />
   <div class="flex justify-start">
     <h3 class="text-3xl font-medium text-gray-700">
       Leads <span class="text-xl">({{ totalCount }} registros) </span>
@@ -208,154 +292,138 @@ const leadsByStatus = computed<GroupedLeads>(() => {
       </div>
     </div>
   </div>
+  <Dialog v-model:visible="isCreateModalOpen" modal header="Crear lead" :style="{ width: '25rem' }">
+    <form @submit.prevent="handleCreateLead">
 
-  <BaseModal :open="isCreateModalOpen" @close="closeCreateModal">
-    <template v-slot:title>
-      <h3 class="text-2xl font-medium text-gray-700">
-        Crear lead
-      </h3>
-    </template>
-    <template v-slot:body>
-      <form @submit.prevent="handleCreateLead">
+      <div class="flex flex-col">
+        <label for="create-name">Titulo:</label>
+        <input v-model="createLeadInput.title" id="create-title" type="text"
+          class="px-4 py-2 border rounded-md focus:ring focus:ring-opacity-50 focus:ring-indigo-300" required />
+      </div>
 
-        <div class="flex flex-col">
-          <label for="create-name">Titulo:</label>
-          <input v-model="createLeadInput.title" id="create-title" type="text"
-            class="px-4 py-2 border rounded-md focus:ring focus:ring-opacity-50 focus:ring-indigo-300" required />
-        </div>
+      <div class="flex flex-col">
+        <label for="create-email">Descripción:</label>
+        <input v-model="createLeadInput.description" id="create-description" type="text"
+          class="px-4 py-2 border rounded-md focus:ring focus:ring-opacity-50 focus:ring-indigo-300" required />
+      </div>
 
-        <div class="flex flex-col">
-          <label for="create-email">Descripción:</label>
-          <input v-model="createLeadInput.description" id="create-description" type="text"
-            class="px-4 py-2 border rounded-md focus:ring focus:ring-opacity-50 focus:ring-indigo-300" required />
-        </div>
+      <div class="flex flex-col w-full">
+        <label for="create-contact">Contacto:</label>
+        <AutoComplete style="width: 400px;" v-model="selectedContact" optionLabel="name" :suggestions="contacts"
+          @complete="searchContact" @select="selectedContact" />
+      </div>
 
-        <div class="flex flex-col">
-          <label for="create-contact">Contacto:</label>
-          <select v-model="createLeadInput.contactId" id="create-contact"
-            class="px-4 py-2 border rounded-md focus:ring focus:ring-opacity-50 focus:ring-indigo-300" required>
-            <option value="">Seleccionar</option>
-            <option v-for="contact in contacts" :key="contact.id" :value="contact.id">{{ contact.name }}</option>
-          </select>
-        </div>
+      <div class="flex flex-col">
+        <label for="create-address">Estado:</label>
 
-        <div class="flex flex-col">
-          <label for="create-address">Estado:</label>
+        <select v-model="createLeadInput.status" id="create-value" type="text"
+          class="px-4 py-2 border rounded-md focus:ring focus:ring-opacity-50 focus:ring-indigo-300">
+          <option :value="LeadStatus.nuevo">Nuevo</option>
+          <option :value="LeadStatus.calificado">Calificado</option>
+          <option :value="LeadStatus.en_curso">En curso</option>
+          <option :value="LeadStatus.oportunidad">Oportunidad</option>
+          <option :value="LeadStatus.completado">Completado</option>
+          <option :value="LeadStatus.cancelado">Cancelado</option>
+        </select>
+      </div>
 
-          <select v-model="createLeadInput.status" id="create-value" type="text"
-            class="px-4 py-2 border rounded-md focus:ring focus:ring-opacity-50 focus:ring-indigo-300">
-            <option value="nuevo">Nuevo</option>
-            <option value="calificado">Calificado</option>
-            <option value="en_curso">En curso</option>
-            <option value="oportunidad">Oportunidad</option>
-            <option value="completado">Completado</option>
-            <option value="cancelado">Cancelado</option>
-          </select>
-        </div>
+      <div class="flex flex-col">
+        <label for="edit-address">Valor proyectado:</label>
+        <input v-model="createLeadInput.value" id="edit-value" type="number"
+          class="px-4 py-2 border rounded-md focus:ring focus:ring-opacity-50 focus:ring-indigo-300" />
+      </div>
 
-        <div class="flex flex-col">
-          <label for="edit-address">Valor proyectado:</label>
-          <input v-model="createLeadInput.value" id="edit-value" type="number"
-            class="px-4 py-2 border rounded-md focus:ring focus:ring-opacity-50 focus:ring-indigo-300" />
-        </div>
+      <div class="flex flex-col">
+        <label for="edit-phone">Vendedor:</label>
 
-        <div class="flex flex-col">
-          <label for="edit-phone">Vendedor:</label>
+        <AutoComplete v-model="selectedUser" optionLabel="name" :suggestions="users" @complete="searchUser"
+          @select="selectedUser" />
+      </div>
 
-          <select v-model="createLeadInput.userId" id="edit-value"
-            class="px-4 py-2 border rounded-md focus:ring focus:ring-opacity-50 focus:ring-indigo-300" required>
-            <option value="">Seleccionar</option>
-            <option v-for="user in users" :key="user.id" :value="user.id">{{ user.name }}</option>
-          </select>
-        </div>
+      <div class="flex justify-end pt-2">
+        <button @click="closeCreateModal" type="button"
+          class="px-6 py-2 mr-2 text-indigo-500 bg-transparent rounded-lg hover:bg-gray-100 hover:text-indigo-400 focus:outline-none">
+          Cancelar
+        </button>
 
-        <div class="flex justify-end pt-2">
-          <button @click="closeCreateModal"
-            class="px-6 py-2 mr-2 text-indigo-500 bg-transparent rounded-lg hover:bg-gray-100 hover:text-indigo-400 focus:outline-none">
-            Cancelar
-          </button>
-
-          <button type="submit"
-            class="px-6 py-2 font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-500 focus:outline-none">
-            Guardar
-          </button>
-        </div>
-      </form>
-    </template>
-  </BaseModal>
+        <button type="submit"
+          class="px-6 py-2 font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-500 focus:outline-none">
+          Guardar
+        </button>
+      </div>
+    </form>
+  </Dialog>
 
   <!-- Modal para editar lead -->
-  <BaseModal :open="isEditModalOpen" @close="closeEditModal">
-    <template v-slot:title>
-      <h3 class="text-2xl font-medium text-gray-700">
-        Editar lead
-      </h3>
-    </template>
-    <template v-slot:body>
-      <form @submit.prevent="handleUpdateLead">
+  <Dialog v-model:visible="isEditModalOpen" modal header="Editar lead" :style="{ width: '25rem' }">
 
-        <div class="flex flex-col">
-          <label for="edit-name">Titulo:</label>
-          <input v-model="editLeadInput.title" id="edit-name" type="text"
-            class="px-4 py-2 border rounded-md focus:ring focus:ring-opacity-50 focus:ring-indigo-300" required />
-        </div>
+    <form @submit.prevent="handleUpdateLead">
 
-        <div class="flex flex-col">
-          <label for="edit-email">Descripción:</label>
-          <input v-model="editLeadInput.description" id="edit-description" type="text"
-            class="px-4 py-2 border rounded-md focus:ring focus:ring-opacity-50 focus:ring-indigo-300" />
-        </div>
+      <div class="flex flex-col">
+        <label for="edit-name">Titulo:</label>
+        <input v-model="editLeadInput.title" id="edit-name" type="text"
+          class="px-4 py-2 border rounded-md focus:ring focus:ring-opacity-50 focus:ring-indigo-300" required />
+      </div>
 
-        <div class="flex flex-col">
-          <label for="edit-contact">Contacto:</label>
-          <select v-model="editLeadInput.contactId" id="edit-contact"
-            class="px-4 py-2 border rounded-md focus:ring focus:ring-opacity-50 focus:ring-indigo-300" required>
-            <option value="">Seleccionar</option>
-            <option v-for="contact in contacts" :key="contact.id" :value="contact.id">{{ contact.name }}</option>
-          </select>
-        </div>
+      <div class="flex flex-col">
+        <label for="edit-email">Descripción:</label>
+        <input v-model="editLeadInput.description" id="edit-description" type="text"
+          class="px-4 py-2 border rounded-md focus:ring focus:ring-opacity-50 focus:ring-indigo-300" />
+      </div>
 
-        <div class="flex flex-col">
-          <label for="create-address">Estado:</label>
+      <div class="flex flex-col">
+        <label for="edit-contact">Contacto:</label>
+        <select v-model="editLeadInput.contactId" id="edit-contact"
+          class="px-4 py-2 border rounded-md focus:ring focus:ring-opacity-50 focus:ring-indigo-300" required>
+          <option value="">Seleccionar</option>
+          <option v-for="contact in contacts" :key="contact.id" :value="contact.id">{{ contact.name }}</option>
+        </select>
+      </div>
 
-          <select v-model="editLeadInput.status" id="create-value" type="text"
-            class="px-4 py-2 border rounded-md focus:ring focus:ring-opacity-50 focus:ring-indigo-300">
-            <option value="nuevo">Nuevo</option>
-            <option value="calificado">Calificado</option>
-            <option value="en_curso">En curso</option>
-            <option value="oportunidad">Oportunidad</option>
-            <option value="completado">Completado</option>
-            <option value="cancelado">Cancelado</option>
-          </select>
-        </div>
 
-        <div class="flex flex-col">
-          <label for="edit-value">Valor proyectado:</label>
-          <input v-model="editLeadInput.value" id="edit-value" type="number"
-            class="px-4 py-2 border rounded-md focus:ring focus:ring-opacity-50 focus:ring-indigo-300" />
-        </div>
+      <div class="flex flex-col">
+        <label for="create-address">Estado:</label>
 
-        <div class="flex flex-col">
-          <label for="edit-userId">Vendedor:</label>
-          <select v-model="editLeadInput.userId" id="edit-userId"
-            class="px-4 py-2 border rounded-md focus:ring focus:ring-opacity-50 focus:ring-indigo-300" required>
-            <option value="">Seleccionar</option>
-            <option v-for="user in users" :key="user.id" :value="user.id">{{ user.name }}</option>
-          </select>
-        </div>
+        <select v-model="editLeadInput.status" id="create-value" type="text"
+          class="px-4 py-2 border rounded-md focus:ring focus:ring-opacity-50 focus:ring-indigo-300">
+          <option :value="LeadStatus.nuevo">Nuevo</option>
+          <option :value="LeadStatus.calificado">Calificado</option>
+          <option :value="LeadStatus.en_curso">En curso</option>
+          <option :value="LeadStatus.oportunidad">Oportunidad</option>
+          <option :value="LeadStatus.completado">Completado</option>
+          <option :value="LeadStatus.cancelado">Cancelado</option>
+        </select>
+      </div>
 
-        <div class="flex justify-end pt-2">
-          <button @click="closeEditModal"
-            class="px-6 py-2 mr-2 text-indigo-500 bg-transparent rounded-lg hover:bg-gray-100 hover:text-indigo-400 focus:outline-none">
-            Cancelar
-          </button>
+      <div class="flex flex-col">
+        <label for="edit-value">Valor proyectado:</label>
+        <input v-model="editLeadInput.value" id="edit-value" type="number"
+          class="px-4 py-2 border rounded-md focus:ring focus:ring-opacity-50 focus:ring-indigo-300" />
+      </div>
 
-          <button type="submit"
-            class="px-6 py-2 font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-500 focus:outline-none">
-            Guardar
-          </button>
-        </div>
-      </form>
-    </template>
-  </BaseModal>
+      <div class="flex flex-col">
+        <label for="edit-userId">Vendedor:</label>
+        <select v-model="editLeadInput.userId" id="edit-userId"
+          class="px-4 py-2 border rounded-md focus:ring focus:ring-opacity-50 focus:ring-indigo-300" required>
+          <option value="">Seleccionar</option>
+          <option v-for="user in users" :key="user.id" :value="user.id">{{ user.name }}</option>
+        </select>
+
+
+      </div>
+
+      <div class="flex justify-end pt-2">
+        <button @click="closeEditModal" type="button"
+          class="px-6 py-2 mr-2 text-indigo-500 bg-transparent rounded-lg hover:bg-gray-100 hover:text-indigo-400 focus:outline-none">
+          Cancelar
+        </button>
+
+        <button type="submit"
+          class="px-6 py-2 font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-500 focus:outline-none">
+          Guardar
+        </button>
+      </div>
+    </form>
+  </Dialog>
+
 </template>

@@ -27,3 +27,9 @@ input RegisterInput {
 type Role {
     name: String!
 }
+
+type UsersPage {
+    users: [User]
+    totalCount: Int
+    totalPages: Int
+}

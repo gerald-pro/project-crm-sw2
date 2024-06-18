@@ -1,4 +1,4 @@
-package com.jonatan.dev.crm_sales.domains.input;
+package com.jonatan.dev.crm_sales.domains.page;
 
 import com.jonatan.dev.crm_sales.domains.SaleDetail;
 import lombok.AllArgsConstructor;

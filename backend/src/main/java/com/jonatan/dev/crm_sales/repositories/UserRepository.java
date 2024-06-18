@@ -5,7 +5,7 @@ import org.springframework.stereotype.Repository;
 import com.jonatan.dev.crm_sales.domains.User;
 
 @Repository
-public interface UserRepository extends MongoRepository<User, String> 
+public interface UserRepository extends MongoRepository<User, String>, UserRepositoryCustom
 {
     Optional<User> findByName(String username);
     User findByUsername(String username);

@@ -1,9 +1,12 @@
 package com.jonatan.dev.crm_sales.services;
 
+import com.jonatan.dev.crm_sales.domains.Product;
 import com.jonatan.dev.crm_sales.domains.Role;
 import com.jonatan.dev.crm_sales.domains.input.UserInput;
 import com.jonatan.dev.crm_sales.exceptions.UserServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -14,6 +17,7 @@ import com.jonatan.dev.crm_sales.domains.User;
 import com.jonatan.dev.crm_sales.repositories.UserRepository;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,6 +31,11 @@ public class UserService implements UserDetailsServiceInterface {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
     }
+
+    public Optional<User> findById(String id) {
+        return userRepository.findById(id);
+    }
+
 
     public User register(UserInput userInput) {
         User user = new User();
@@ -50,6 +59,10 @@ public class UserService implements UserDetailsServiceInterface {
     public User getUserById(String id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new UserServiceException("Usuario no encontrado. id: " + id));
+    }
+
+    public Page<User> getUsers(Pageable pageable, Optional<String> filter) {
+        return userRepository.findAll(pageable, filter);
     }
 
     @Override

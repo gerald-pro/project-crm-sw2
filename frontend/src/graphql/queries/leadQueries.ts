@@ -18,3 +18,18 @@ export const GET_LEADS = gql`
         }
     }
 `;
+
+export const GET_LEAD = gql`
+    query ($id: String!) { 
+        getLead (id: $id) {
+            id
+            title
+            description
+            value
+            userId
+            contactId
+            status
+            createdAt
+        }
+    }
+`;

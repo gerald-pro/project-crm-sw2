@@ -20,7 +20,7 @@ public class Lead {
     private String userId;
     private String contactId;
     private Float value;
-    private String status = "nuevo";
+    private LeadStatus status = LeadStatus.nuevo;
     @CreatedDate
     private LocalDateTime createdAt;
 }
